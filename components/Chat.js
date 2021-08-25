@@ -4,7 +4,7 @@ import { View, Platform, KeyboardAvoidingView } from 'react-native';
 import { GiftedChat, Bubble } from 'react-native-gifted-chat';
 
 //firebase 
-const firebase = require('firebase/app').default;
+import firebase from 'firebase';
 require ('firebase/firestore');
 
 export default class Screen2 extends React.Component {
@@ -44,8 +44,9 @@ export default class Screen2 extends React.Component {
         if (!user) {
           firebase.auth().signInAnonymously();
         }
-       this.unsubscribe = this. referenceMessages.onSnapshot(this.onCollectionUpdated) 
+       // this.unsubscribe = this. referenceMessages.onSnapshot(this.onCollectionUpdated) 
         this.setState({
+            messages: [{
                     _id: 1,
                     text:`Hello ${name}`,
                     createdAt: new Date(),
@@ -54,7 +55,9 @@ export default class Screen2 extends React.Component {
                         name: 'React Native',
                         avatar: 'https://placeimg.com/140/140/any',
                     },
+    
                     messages: [],
+                }]   
         });
         this.unsubscribe = this.referenceChatMessages
         .orderBy("createdAt", "desc")
