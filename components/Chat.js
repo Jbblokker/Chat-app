@@ -178,6 +178,19 @@ export default class Screen2 extends React.Component {
 
     }
 
+    //render the default inputToolbar
+    renderInputToolbar(props) {
+        if (this.state.isConnected == false) {
+        } else {
+            return(
+                <InputToolbar
+                {...props}
+                />
+            );
+        }
+    }
+ 
+
     
     render() {
          const { changeColor } = this.props.route.params
