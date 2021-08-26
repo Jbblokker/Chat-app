@@ -7,6 +7,9 @@ import { GiftedChat, Bubble } from 'react-native-gifted-chat';
 import firebase from 'firebase';
 require ('firebase/firestore');
 
+//import AsyncStorage
+import AsyncStorage from '@react-native-community/async-storage';
+
 export default class Screen2 extends React.Component {
     constructor() {
         super();
@@ -27,6 +30,7 @@ export default class Screen2 extends React.Component {
         this.referenceChatMessages = firebase.firestore().collection("messages");
         this.state = {
             messages: [],
+            uid: 0,
             user: {
                 _id:"",
                 name:"",
@@ -39,29 +43,28 @@ export default class Screen2 extends React.Component {
     componentDidMount = () => {
        const { name } = this.props.route.params
        this.props.navigation.setOptions({ title: name});
-       this.referenceMessages = firebase.firestore().collection('messages');
        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
         if (!user) {
           firebase.auth().signInAnonymously();
-        }
-       // this.unsubscribe = this. referenceMessages.onSnapshot(this.onCollectionUpdated) 
+        } 
         this.setState({
             messages: [{
                     _id: 1,
                     text:`Hello ${name}`,
                     createdAt: new Date(),
                     user: {
-                        _id: 2,
+                        _id: user.uid,
                         name: 'React Native',
                         avatar: 'https://placeimg.com/140/140/any',
                     },
-    
+            }],
                     messages: [],
-                }]   
+                   
         });
         this.unsubscribe = this.referenceChatMessages
         .orderBy("createdAt", "desc")
         .onSnapshot(this.onCollectionUpdate);
+        this.getMessages();
     });
     };
 
@@ -69,17 +72,42 @@ export default class Screen2 extends React.Component {
         this.unsubscribe();
     }
 
+     //get messages from AsyncStorage
+     async getMessages() {
+        let messages = '';
+        try{
+            messages = await AsyncStorage.getItem('messages') || [];
+            this.setState({
+                messages: JSON.parse(messages)
+            });
+        }   catch (error){
+            console.log(error.message);
+        }
+    };
+
+    //delete messages from AsyncStorage
+    async deleteMessages() {
+        try {
+            await AsyncStorage.removeItem('messages');
+            this.setState({
+                messages: []
+            })
+        } catch (error) {
+            console.log(error.message);
+        }
+    }
+    
     addMessage() {
         const message = this.state.messages[0];
         this.referenceChatMessages.add({
-          _id: message._id,
-          createdAt: message.createdAt,
-          text: message.text || null,
-          user: message.user,
-          image: message.image || null,
-          location: message.location || null
+            _id: message._id,
+            createdAt: message.createdAt,
+            text: message.text || null,
+            user: message.user,
+            image: message.image || null,
+            location: message.location || null
         });
-      }
+    }
 
     onCollectionUpdate = (querySnapshot) => {
         const messages = [];
@@ -87,10 +115,10 @@ export default class Screen2 extends React.Component {
         querySnapshot.forEach((doc) => {
           // get the QueryDocumentSnapshot's data
           const data = doc.data();
-          lists.push({
+          messages.push({
             _id: data._id,
             text: data.text || null,
-            CreatedAt: Data.createdAt.toDate(),
+            createdAt: data.createdAt.toDate(),
             user: {
                 _id: data._id,
                 name: data.user.name,
@@ -103,16 +131,28 @@ export default class Screen2 extends React.Component {
         this.setState({
           messages,
         });
-      };   
-  
-// allowing user to send messages 
+    };   
+    
+    //store messages 
     onSend(messages = []) {
-        this.setState((previousState) => ({
-            messages: GiftedChat.append
-            (previousState.messages, messages),
-        }));
+        this.setState(previousState => ({
+            messages: GiftedChat.append(previousState.messages,messages),
+        }) ,() => {
+            this.addMessage();
+            this.saveMessages();
+        });
     }
-// this allows us to change color of the chat bubble
+     
+    //save messages
+    async saveMessages() {
+        try {
+            await AsyncStorage.setItem('messages', JSON.stringify(this.state.messages));
+        } catch (error) {
+            console.log(error.message);
+        }
+    }
+
+    // this allows us to change color of the chat bubble
     renderBubble(props) { 
         return (
             <Bubble
