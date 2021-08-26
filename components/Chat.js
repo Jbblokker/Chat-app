@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Platform, KeyboardAvoidingView } from 'react-native';
+
 //gifted chat library
-import { GiftedChat, Bubble } from 'react-native-gifted-chat';
+import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat';
 
 //firebase 
 import firebase from 'firebase';
@@ -9,6 +10,9 @@ require ('firebase/firestore');
 
 //import AsyncStorage
 import AsyncStorage from '@react-native-community/async-storage';
+
+//import NetInfo
+import NetInfo, { NetInfoCellularGeneration } from '@react-native-community/netinfo';
 
 export default class Screen2 extends React.Component {
     constructor() {
@@ -41,7 +45,14 @@ export default class Screen2 extends React.Component {
     }
 // adding component for making message from state
     componentDidMount = () => {
-       const { name } = this.props.route.params
+       const { name } = this.props.route.params;
+       NetInfo.fetch().then(connection => {
+           if (connection.isConnected) {
+               console.log('online');
+           } else {
+               console.log('offline');
+           }
+       });
        this.props.navigation.setOptions({ title: name});
        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
         if (!user) {
