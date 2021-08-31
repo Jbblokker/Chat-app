@@ -12,7 +12,7 @@ require ('firebase/firestore');
 import AsyncStorage from '@react-native-community/async-storage';
 
 //import NetInfo
-import NetInfo, { NetInfoCellularGeneration } from '@react-native-community/netinfo';
+import NetInfo from '@react-native-community/netinfo';
 
 export default class Screen2 extends React.Component {
     constructor() {
@@ -39,7 +39,8 @@ export default class Screen2 extends React.Component {
                 _id:"",
                 name:"",
                 avatar:"",
-            }
+            },
+            isConnected: false,
 
         };
     }
@@ -57,30 +58,55 @@ export default class Screen2 extends React.Component {
        this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
         if (!user) {
           firebase.auth().signInAnonymously();
-        } 
+        } {
         this.setState({
             messages: [{
                     _id: 1,
                     text:`Hello ${name}`,
                     createdAt: new Date(),
                     user: {
-                        _id: user.uid,
+                        _id: 2,
                         name: 'React Native',
                         avatar: 'https://placeimg.com/140/140/any',
                     },
-            }],
+            },
+            {
+                _id: 2,
+                text: 'This is a system message',
+                createdAt: new Date(),
+                system: true,
+               },
+        ],
+            
                     messages: [],
                    
         });
         this.unsubscribe = this.referenceChatMessages
         .orderBy("createdAt", "desc")
-        .onSnapshot(this.onCollectionUpdate);
+        .onSnapshot(this.onCollectionUpdate)
         this.getMessages();
+            this.setState({ isConnected: false})
+        }
+        this.setState({ isConnected: false});
     });
     };
 
+    
+    // render the default inputToolbar
+    renderInputToolbar(props) {
+        if (this.state.isConnected == false) {
+        } else {
+            return(
+                <InputToolbar
+                {...props}
+                />
+            );
+        }
+    }
+ 
     componentWillUnmount() {
         this.unsubscribe();
+        this.authUnsubscribe();
     }
 
      //get messages from AsyncStorage
@@ -177,26 +203,13 @@ export default class Screen2 extends React.Component {
         )
 
     }
-
-    //render the default inputToolbar
-    renderInputToolbar(props) {
-        if (this.state.isConnected == false) {
-        } else {
-            return(
-                <InputToolbar
-                {...props}
-                />
-            );
-        }
-    }
- 
-
     
     render() {
          const { changeColor } = this.props.route.params
         return (
            <View style={{ flex:1, backgroundColor: changeColor, }}>
             <GiftedChat
+                renderInputToolbar={this.renderInputToolbar}
                 renderBubble={this.renderBubble.bind(this)}
                 messages={this.state.messages}
                 onSend={messages => this.onSend(messages)}
