@@ -9,13 +9,17 @@ import firebase from "firebase";
 require("firebase/firestore");
 
 //import AsyncStorage
-import AsyncStorage from "@react-native-community/async-storage";
+import { AsyncStorage } from "react-native";
 
 //import NetInfo
 import NetInfo from "@react-native-community/netinfo";
 
 //import CustomActions 
-//import CustomActions from './CustomActions';
+import CustomActions from "./CustomActions";
+
+//import MapView
+import MapView from "react-native-maps";
+
 
 
 export default class Screen2 extends React.Component {
@@ -45,44 +49,37 @@ export default class Screen2 extends React.Component {
         avatar: "",
       },
       isConnected: false,
+      image: null,
+      location: null,
+
     };
   }
   // adding component for making message from state
   componentDidMount = () => {
     const { name } = this.props.route.params;
+    this.props.navigation.setOptions({ title: name });
     NetInfo.fetch().then((connection) => {
       if (connection.isConnected) {
-        console.log("online");
         this.setState({ "isConnected": true });
+        console.log("online");
       } else {
         console.log("offline");
       }
     });
-    this.props.navigation.setOptions({ title: name });
     this.authUnsubscribe = firebase.auth().onAuthStateChanged((user) => {
       if (!user) {
         firebase.auth().signInAnonymously();
-      } else {
+      } 
         this.setState({
-          messages: [{
-            _id: 1,
-            text: `Hello ${name}`,
-            createdAt: new Date(),
+            uid: user.uid,
             user: {
-              _id: 2,
-              name: "React Native",
-              avatar: "https://placeimg.com/140/140/any",
+              _id: user.uid,
+              name: name,
+              avatar: 'https://placeimg.com/140/140/any',
             },
-          }, {
-            _id: 2,
-            text: "This is a system message",
-            createdAt: new Date(),
-            system: true,
-          }],
-
-          messages: [],
+            messages: [],
         }); 
-        this.set.state ({ user: {_id:user.uid, name: this.props.route.params, avatar: this.setState.avatar } });
+        //this.set.state ({ user: {_id:user.uid, name: this.props.route.params} });
         this.unsubscribe = this.referenceChatMessages
           .orderBy("createdAt", "desc")
           .onSnapshot(this.onCollectionUpdate);
@@ -90,7 +87,7 @@ export default class Screen2 extends React.Component {
         //    this.setState({ isConnected: false})
         //}
         //this.setState({ isConnected: false});
-      }
+      
     });
   }
 
@@ -154,18 +151,18 @@ export default class Screen2 extends React.Component {
     // go through each document
     querySnapshot.forEach((doc) => {
       // get the QueryDocumentSnapshot's data
-      const data = doc.data();
+      let data = doc.data();
       messages.push({
         _id: data._id,
         text: data.text || null,
         createdAt: data.createdAt.toDate(),
         user: {
-          _id: data.user_id,
+          _id: data.user._id,
           name: data.user.name,
           avatar: data.user.avatar,
         },
-        image: data.image || "",
-        location: data.location || null,
+        image: data.image,
+        location: data.location,
       });
     });
     this.setState({
@@ -187,7 +184,7 @@ export default class Screen2 extends React.Component {
   async saveMessages() {
     try {
       await AsyncStorage.setItem(
-        "messages",
+        'messages',
         JSON.stringify(this.state.messages),
       );
     } catch (error) {
@@ -202,11 +199,35 @@ export default class Screen2 extends React.Component {
         {...props}
         wrapperStyle={{
           right: {
-            backgroundColor: "#000",
+            backgroundColor: "#1976D2",
           },
         }}
       />
     );
+  }
+
+   renderCustomActions = (props) => {
+    return <CustomActions {...props} />;
+  };
+
+  // custom view for the maps
+  renderCustomView = (props) => {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{ borderRadius: 13, height: 150, margin: 3, width: 200, }}
+          showsUserLocation={true}
+          region={{
+            latitude: Number(currentMessage.location.latitude),
+            longitude: Number(currentMessage.location.longitude),
+            latitudeDelta: 1.2,
+            longitudeDelta: 1,
+          }}
+        />
+      );
+    }
+    return null;
   }
 
   render() {
@@ -216,8 +237,10 @@ export default class Screen2 extends React.Component {
         <GiftedChat
           renderInputToolbar={this.renderInputToolbar.bind(this)}
           renderBubble={this.renderBubble.bind(this)}
+          renderActions={this.renderCustomActions}
+          renderCustomView={this.renderCustomView}
           messages={this.state.messages}
-          onSend={(messages) => this.onSend(messages)}
+          onSend={messages => this.onSend(messages)}
           user={
             this.state.user
           }
