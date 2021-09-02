@@ -9,13 +9,13 @@ import firebase from "firebase";
 require("firebase/firestore");
 
 //import AsyncStorage
-import { AsyncStorage } from "react-native";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 //import NetInfo
 import NetInfo from "@react-native-community/netinfo";
 
 //import CustomActions 
-import CustomActions from "./CustomActions";
+import CustomActions from './CustomActions';
 
 //import MapView
 import MapView from "react-native-maps";
