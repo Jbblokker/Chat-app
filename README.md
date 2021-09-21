@@ -1,4 +1,5 @@
 # Chat-app
+# Purpose
 <p>The goal for this project was to create a chat app using React Native.This
 app is to be used on mobile device.</p>
 <p>This app will allow users to chat in an interface that can share location along with images.</p>
